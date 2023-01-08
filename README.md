@@ -211,3 +211,11 @@ qm start 100
 [  128.111128] vfio-pci 0000:0b:00.0: AMD_NAVI10: performing post-reset
 [  128.149985] vfio-pci 0000:0b:00.0: AMD_NAVI10: reset result = 0
 ```
+
+## Cannot reset GPU audio device?
+
+```shell
+kvm: vfio: Cannot reset device 0000:0b:00.1, no available reset mechanism.
+```
+
+`0b:00.1`是显卡的音频HDMI设备`[AMD/ATI] Navi 10 HDMI Audio`，如果这样提示显卡音频reset失败，不用管，只要在macOS里面能正常播放音频就不用担心。
