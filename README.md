@@ -7,11 +7,11 @@ macOS Venture安装到Proxmox，实现GPU直通、USB直通、蓝牙直通、WiF
 
 ## 设备配置
 
-CPU: AMD Ryzen 7 3700X
-GPU: AMD 5700XT
+CPU: AMD Ryzen 7 3700X 8-Core Processor
+GPU: AMD Radeon RX 5700XT
 内存：金士顿 DDR4 32GB
-主板：技嘉 X570 AORUS PRO Wi-Fi
-硬盘：三星 EVO 970 1TB
+主板：技嘉 Gigabyte Technology Co., Ltd. X570 AORUS PRO WIFI/X570 AORUS PRO WIFI, BIOS F35 01/04/2022
+硬盘：Samsung SSD 870 EVO 1TB
 
 之所以选择这么贵的硬盘主要是为了抵消虚拟化的性能损失，能接近苹果上的表现。然后主板有板载WIFi+蓝牙，Intel AX200可以破解使用，我其实只要蓝牙就可以，用来连接苹果蓝牙键盘和触控板。
 
@@ -112,3 +112,102 @@ echo "blacklist iwlwifi" >> /etc/modprobe.d/blacklist.conf
 echo "blacklist ccp" >> /etc/modprobe.d/blacklist.conf
 ```
 
+注：正确配置后显示器会卡在 `init xxxxxxxxx` 的grub界面，如果没有则gpu被宿主机使用，要重新检查配置
+
+## 驱动
+
+安装成功并且PCI设备直通后，就是要处理macOS的驱动问题了，Wifi、蓝牙是没有驱动的，而显卡又需要一些hack。接下来这部分就是和黑苹果相关，处理OpenCore的配置。
+
+先挂载OpenCore的EFI分区
+```shell
+~$ diskutil list
+/dev/disk0 (external, physical):
+   #:                   TYPE NAME              SIZE       IDENTIFIER
+   0:  GUID_partition_scheme                  *512.1 GB   disk0
+   1:                    EFI EFI               209.7 MB   disk0s1
+   2:             Apple_APFS Container disk1   511.9 GB   disk0s2
+sudo mkdir /Volumes/EFI
+sudo mount -t msdos /dev/disk0s1 /Volumes/EFI
+```
+
+5700XT显卡需要正常驱动，需要添加启动参数`NVRAM>Add>7C436110-AB2A-4BBB-A880-FE41995C9F82>boot-args`为`keepsyms=1 agdpmod=pikera`。
+> 参考文档：https://dortania.github.io/GPU-Buyers-Guide/modern-gpus/amd-gpu.html#navi-21-series
+
+WiFi驱动，添加方法按照文档来
+https://github.com/OpenIntelWireless/itlwm
+
+蓝牙驱动，添加方法按照文档来
+https://github.com/OpenIntelWireless/IntelBluetoothFirmware
+
+优先使用 `AirportItlwm`，支持系统原生控制隔空投送等功能（目前还是alpha版本不稳定），`itlwm` 需要配合HeilPort使用。
+
+如果使用 `AirportItlwm` 则需要配置安全启动，中级的就可以，完全的安全启动测试没有通过。`DmgLoading`为`Signed`，`SecureBootModel`为你的设备对应值，修改后重新启动系统。
+> SecureBootModel 参考文档 https://dortania.github.io/OpenCore-Post-Install/universal/security/applesecureboot.html#special-notes-with-securebootmodel
+
+## 启动虚拟机
+
+因为显卡的reset bug，启动虚拟机需要两次启动和一些hack，要移除需要直通的PCI设备并重新rescan。
+
+> /sys/bus/pci/devices/xxxx/ 是对应的设备ID，需要通过命令或者proxmox界面上添加PCI设备上查看
+
+### 第一次启动
+```shell
+export LC_ALL=en_US.UTF-8
+# 显卡
+echo 1 > /sys/bus/pci/devices/0000:0b:00.0/remove
+# 显卡HDMI
+echo 1 > /sys/bus/pci/devices/0000:0b:00.1/remove
+# 板载 Intel AX 200 无线网络WiFi模块
+echo 1 > /sys/bus/pci/devices/0000:04:00.0/remove
+# USB控制器
+echo 1 > /sys/bus/pci/devices/0000:06:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:06:00.3/remove
+echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
+echo 1 > /sys/bus/pci/rescan
+# vendor-reset需要这句特殊配置
+echo 'device_specific' > /sys/bus/pci/devices/0000:0b:00.0/reset_method
+qm start 100
+```
+
+启动后通过`dmesg`可以看到如下log, `No more image in the PCI ROM`说明显卡没有启动成功。
+```shell
+[   92.007715] vendor-reset-drm: atomfirmware: bios_scratch_reg_offset initialized to 4c
+[   92.220640] vfio-pci 0000:0b:00.0: AMD_NAVI10: bus reset disabled? yes
+[   92.220644] vfio-pci 0000:0b:00.0: AMD_NAVI10: SMU response reg: 0, sol reg: 0, mp1 intr enabled? no, bl ready? yes
+[   92.220648] vfio-pci 0000:0b:00.0: AMD_NAVI10: performing post-reset
+[   92.257817] vfio-pci 0000:0b:00.0: AMD_NAVI10: reset result = 0
+[   94.696592] vfio-pci 0000:0b:00.0: No more image in the PCI ROM
+[   94.696614] vfio-pci 0000:0b:00.0: No more image in the PCI ROM
+```
+
+关闭虚拟机
+```shell
+qm stop 100
+```
+
+### 第二次启动
+```shell
+# 显卡
+echo 1 > /sys/bus/pci/devices/0000:0b:00.0/remove
+# 显卡HDMI
+echo 1 > /sys/bus/pci/devices/0000:0b:00.1/remove
+# 板载 Intel AX 200 无线网络WiFi模块
+echo 1 > /sys/bus/pci/devices/0000:04:00.0/remove
+# USB控制器
+echo 1 > /sys/bus/pci/devices/0000:06:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:06:00.3/remove
+echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
+echo 1 > /sys/bus/pci/rescan
+# vendor-reset需要这句特殊配置
+echo 'device_specific' > /sys/bus/pci/devices/0000:0b:00.0/reset_method
+qm start 100
+```
+
+代码和第一次一样，但是`dmesg`没有`No more image in the PCI ROM`就说明是成功了，等一会就看到显示器亮了
+```shell
+[  127.898210] vendor-reset-drm: atomfirmware: bios_scratch_reg_offset initialized to 4c
+[  128.111121] vfio-pci 0000:0b:00.0: AMD_NAVI10: bus reset disabled? yes
+[  128.111125] vfio-pci 0000:0b:00.0: AMD_NAVI10: SMU response reg: 0, sol reg: 0, mp1 intr enabled? no, bl ready? yes
+[  128.111128] vfio-pci 0000:0b:00.0: AMD_NAVI10: performing post-reset
+[  128.149985] vfio-pci 0000:0b:00.0: AMD_NAVI10: reset result = 0
+```
