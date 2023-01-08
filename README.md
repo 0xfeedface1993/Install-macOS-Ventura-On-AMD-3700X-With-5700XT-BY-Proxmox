@@ -7,11 +7,11 @@ macOS Venture安装到Proxmox，实现GPU直通、USB直通、蓝牙直通、WiF
 
 ## 设备配置
 
-CPU: AMD Ryzen 7 3700X 8-Core Processor
-GPU: AMD Radeon RX 5700XT
-内存：金士顿 DDR4 32GB
-主板：技嘉 Gigabyte Technology Co., Ltd. X570 AORUS PRO WIFI/X570 AORUS PRO WIFI, BIOS F35 01/04/2022
-硬盘：Samsung SSD 870 EVO 1TB
+CPU: AMD Ryzen 7 3700X 8-Core Processor  
+GPU: AMD Radeon RX 5700XT  
+内存：金士顿 DDR4 32GB  
+主板：技嘉 Gigabyte Technology Co., Ltd. X570 AORUS PRO WIFI/X570 AORUS PRO WIFI, BIOS F35 01/04/2022  
+硬盘：Samsung SSD 870 EVO 1TB  
 
 之所以选择这么贵的硬盘主要是为了抵消虚拟化的性能损失，能接近苹果上的表现。然后主板有板载WIFi+蓝牙，Intel AX200可以破解使用，我其实只要蓝牙就可以，用来连接苹果蓝牙键盘和触控板。
 
