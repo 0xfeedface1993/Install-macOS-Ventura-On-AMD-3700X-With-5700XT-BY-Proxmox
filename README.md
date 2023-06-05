@@ -219,3 +219,27 @@ kvm: vfio: Cannot reset device 0000:0b:00.1, no available reset mechanism.
 ```
 
 `0b:00.1`是显卡的音频HDMI设备`[AMD/ATI] Navi 10 HDMI Audio`，如果这样提示显卡音频reset失败，不用管，只要在macOS里面能正常播放音频就不用担心。
+
+# Ventura 13.4 蓝牙无法驱动解决方案
+
+如下位置添加两个键值: NVRAM > 7C436110-AB2A-4BBB-A880-FE41995C9F82
+
+| Key | Type | Value |
+| :--- | --- | --- |
+| bluetoothInternalControllerInfo | Data | <`00000000 00000000 00000000 0000`> |
+| bluetoothExternalDongleFailed | Data | <`00`> | 
+
+https://github.com/OpenIntelWireless/IntelBluetoothFirmware/issues/435
+https://www.bilibili.com/read/cv24122599
+https://www.reddit.com/r/hackintosh/comments/13lgrrf/ventura_134_bluetooth_issue/
+
+然后启动后用 `hackintool` 修改 `bluetoothInternalControllerInfo` 为 `<00>`
+
+# 更新macOS小版本
+
+1. 移除显卡PCI设备，Display修改为VMware Compatible, 使用显卡安装会出现黑屏问题
+2. 退出iCloud账户
+2. 修改config，关闭Secure Boot，Secure Model改为Disabled，重启验证
+3. 使用OS-KVM生成最新Venture-full.img, 上传到Proxmox的ISO Images中
+4. 重启，进入安装流程
+5. 安装完成后，在恢复Secure Boot，Secure Model改为j137, Display改为None，添加显卡PCI设备
