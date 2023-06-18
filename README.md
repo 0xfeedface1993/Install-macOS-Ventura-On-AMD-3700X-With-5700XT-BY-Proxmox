@@ -38,6 +38,15 @@ nano /etc/apt/sources.list.d/pve-enterprise.list
 # deb https://enterprise.proxmox.com/debian/pve bullseye pve-enterprise
 ```
 
+去`sources.list`添加非收费源：
+```shell
+nano /etc/apt/sources.list
+
+# PVE pve-no-subscription repository provided by proxmox.com,
+# NOT recommended for production use
+deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription
+```
+
 然后更新系统，更新后要重启系统：
 
 ```shell
@@ -69,6 +78,7 @@ args: -device isa-applesmc,osk="THE OS KEY" -smbios type=2 -device usb-kbd,bus=e
 #### GRUB配置
 
 ```shell
+nano /etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt video=vesafb:off,efifb:off initcall_blacklist=sysfb_init rootdelay=10"
 ```
 
@@ -89,7 +99,7 @@ vfio_virqfd
 ```shell
 echo "options vfio_iommu_type1 allow_unsafe_interrupts=1" > /etc/modprobe.d/iommu_unsafe_interrupts.conf
 echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
-echo "options kvm-amd nested=Y" >> /etc/modprobe.d/kvm-amd.conf
+# echo "options kvm-amd nested=Y" >> /etc/modprobe.d/kvm-amd.conf
 # GPU HDMI 音频直通相关
 echo "options snd-hda-intel enable_msi=1" >> /etc/modprobe.d/snd-hda-intel.conf
 
@@ -154,18 +164,18 @@ https://github.com/OpenIntelWireless/IntelBluetoothFirmware
 ```shell
 export LC_ALL=en_US.UTF-8
 # 显卡
-echo 1 > /sys/bus/pci/devices/0000:0b:00.0/remove
+echo 1 > /sys/bus/pci/devices/0000:0c:00.0/remove
 # 显卡HDMI
-echo 1 > /sys/bus/pci/devices/0000:0b:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:0c:00.1/remove
 # 板载 Intel AX 200 无线网络WiFi模块
-echo 1 > /sys/bus/pci/devices/0000:04:00.0/remove
+echo 1 > /sys/bus/pci/devices/0000:05:00.0/remove
 # USB控制器
-echo 1 > /sys/bus/pci/devices/0000:06:00.1/remove
-echo 1 > /sys/bus/pci/devices/0000:06:00.3/remove
-echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
+echo 1 > /sys/bus/pci/devices/0000:07:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:07:00.3/remove
+# echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
 echo 1 > /sys/bus/pci/rescan
 # vendor-reset需要这句特殊配置
-echo 'device_specific' > /sys/bus/pci/devices/0000:0b:00.0/reset_method
+echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
 qm start 100
 ```
 
@@ -188,18 +198,18 @@ qm stop 100
 ### 第二次启动
 ```shell
 # 显卡
-echo 1 > /sys/bus/pci/devices/0000:0b:00.0/remove
+echo 1 > /sys/bus/pci/devices/0000:0c:00.0/remove
 # 显卡HDMI
-echo 1 > /sys/bus/pci/devices/0000:0b:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:0c:00.1/remove
 # 板载 Intel AX 200 无线网络WiFi模块
-echo 1 > /sys/bus/pci/devices/0000:04:00.0/remove
+echo 1 > /sys/bus/pci/devices/0000:05:00.0/remove
 # USB控制器
-echo 1 > /sys/bus/pci/devices/0000:06:00.1/remove
-echo 1 > /sys/bus/pci/devices/0000:06:00.3/remove
+echo 1 > /sys/bus/pci/devices/0000:07:00.1/remove
+echo 1 > /sys/bus/pci/devices/0000:07:00.3/remove
 echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
 echo 1 > /sys/bus/pci/rescan
 # vendor-reset需要这句特殊配置
-echo 'device_specific' > /sys/bus/pci/devices/0000:0b:00.0/reset_method
+echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
 qm start 100
 ```
 
