@@ -11,7 +11,7 @@ CPU: AMD Ryzen 7 3700X 8-Core Processor
 GPU: AMD Radeon RX 5700XT  
 内存：金士顿 DDR4 32GB  
 主板：技嘉 Gigabyte Technology Co., Ltd. X570 AORUS PRO WIFI/X570 AORUS PRO WIFI, BIOS F35 01/04/2022  
-硬盘：Samsung SSD 970 EVO 1TB  
+硬盘：Samsung SSD 980 EVO 1TB  
 
 之所以选择这么贵的硬盘主要是为了抵消虚拟化的性能损失，能接近苹果上的表现。然后主板有板载WIFi+蓝牙，Intel AX200可以破解使用，我其实只要蓝牙就可以，用来连接苹果蓝牙键盘和触控板。
 
@@ -83,6 +83,17 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt video=vesafb:off,efifb:o
 ```
 
 `initcall_blacklist=sysfb_init` 和 `rootdelay=10` 是必须的，否则单GPU及时配置了blacklist也是会被宿主系统使用。
+
+当使用了`zfs`文件系统则可能使用`systemd-boot`作引导启动，以上参数只要填写到`/etc/kernel/cmdline`即可:
+```shell
+nano /etc/kernel/cmdline
+
+# 启动内核参数类似
+root=ZFS=rpool/ROOT/pve-1 boot=zfs amd_iommu=on iommu=pt video=vesafb:off,efifb:off initcall_blacklist=sysfb_init rootdelay=10
+
+# 刷新systemd-boot
+proxmox-boot-tool refresh
+```
 
 #### PCI Passthrough配置
 
@@ -206,7 +217,7 @@ echo 1 > /sys/bus/pci/devices/0000:05:00.0/remove
 # USB控制器
 echo 1 > /sys/bus/pci/devices/0000:07:00.1/remove
 echo 1 > /sys/bus/pci/devices/0000:07:00.3/remove
-echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
+# echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
 echo 1 > /sys/bus/pci/rescan
 # vendor-reset需要这句特殊配置
 echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
