@@ -184,6 +184,12 @@ echo 1 > /sys/bus/pci/devices/0000:05:00.0/remove
 echo 1 > /sys/bus/pci/devices/0000:07:00.1/remove
 echo 1 > /sys/bus/pci/devices/0000:07:00.3/remove
 # echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
+# 设置系统在4秒后从待机状态（suspend）恢复，并且不通过低功耗模式（no）
+rtcwake -m no -s 4
+# 将系统置于待机状态
+systemctl suspend
+# 在待机状态恢复后等待一段时间，以确保系统完全恢复并稳定运行
+sleep 5s
 echo 1 > /sys/bus/pci/rescan
 # vendor-reset需要这句特殊配置
 echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
