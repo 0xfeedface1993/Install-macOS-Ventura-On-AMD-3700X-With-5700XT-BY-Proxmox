@@ -206,13 +206,13 @@ qm start 100
 [   94.696592] vfio-pci 0000:0b:00.0: No more image in the PCI ROM
 [   94.696614] vfio-pci 0000:0b:00.0: No more image in the PCI ROM
 ```
-
-关闭虚拟机
+~~关闭虚拟机~~  
 ```shell
 qm stop 100
 ```
 
-### 第二次启动
+
+~~### 第二次启动~~  
 ```shell
 # 显卡
 echo 1 > /sys/bus/pci/devices/0000:0c:00.0/remove
@@ -230,7 +230,7 @@ echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
 qm start 100
 ```
 
-代码和第一次一样，但是`dmesg`没有`No more image in the PCI ROM`就说明是成功了，等一会就看到显示器亮了
+~~代码和第一次一样，但是`dmesg`没有`No more image in the PCI ROM`就说明是成功了，等一会就看到显示器亮了~~  
 ```shell
 [  127.898210] vendor-reset-drm: atomfirmware: bios_scratch_reg_offset initialized to 4c
 [  128.111121] vfio-pci 0000:0b:00.0: AMD_NAVI10: bus reset disabled? yes
@@ -238,6 +238,7 @@ qm start 100
 [  128.111128] vfio-pci 0000:0b:00.0: AMD_NAVI10: performing post-reset
 [  128.149985] vfio-pci 0000:0b:00.0: AMD_NAVI10: reset result = 0
 ```
+
 
 ## Cannot reset GPU audio device?
 
