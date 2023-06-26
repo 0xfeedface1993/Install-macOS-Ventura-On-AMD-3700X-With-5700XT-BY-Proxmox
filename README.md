@@ -171,9 +171,11 @@ https://github.com/OpenIntelWireless/IntelBluetoothFirmware
 
 > /sys/bus/pci/devices/xxxx/ 是对应的设备ID，需要通过命令或者proxmox界面上添加PCI设备上查看
 
-### 第一次启动
+### 启动脚本
 ```shell
 export LC_ALL=en_US.UTF-8
+# 临时文件，系统重启后会被清除，用来标识是否执行过rtcwake命令，这个命令在关机前只需要执行一次
+TEMP_FILE=/tmp/has_rtcwake
 # 显卡
 echo 1 > /sys/bus/pci/devices/0000:0c:00.0/remove
 # 显卡HDMI
@@ -184,12 +186,15 @@ echo 1 > /sys/bus/pci/devices/0000:05:00.0/remove
 echo 1 > /sys/bus/pci/devices/0000:07:00.1/remove
 echo 1 > /sys/bus/pci/devices/0000:07:00.3/remove
 # echo 1 > /sys/bus/pci/devices/0000:0d:00.3/remove
-# 设置系统在4秒后从待机状态（suspend）恢复，并且不通过低功耗模式（no）
-rtcwake -m no -s 4
-# 将系统置于待机状态
-systemctl suspend
-# 在待机状态恢复后等待一段时间，以确保系统完全恢复并稳定运行
-sleep 5s
+
+if [ ! -f "$TEMP_FILE" ]; then
+  touch "$TEMP_FILE"
+  # 设置系统在4秒后从待机状态（suspend）恢复，并且不通过低功耗模式（no）
+  rtcwake -m no -s 4
+  systemctl suspend
+  sleep 5s
+fi
+
 echo 1 > /sys/bus/pci/rescan
 # vendor-reset需要这句特殊配置
 echo 'device_specific' > /sys/bus/pci/devices/0000:0c:00.0/reset_method
